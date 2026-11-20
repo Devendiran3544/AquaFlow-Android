@@ -1,6 +1,8 @@
 .gradle/
 .idea/
 local.properties
+cacerts
+*.cer
 **/build/
 *.iml
 .DS_Store
