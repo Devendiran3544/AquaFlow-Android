@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.aquaflow.waterreminder.MainActivity
+import com.aquaflow.waterreminder.R
 import com.aquaflow.waterreminder.data.AquaFlowDatabase
 import com.aquaflow.waterreminder.data.HydrationRepository
 import com.aquaflow.waterreminder.domain.HydrationCalculator
@@ -70,9 +71,12 @@ class WaterReminderWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val soundEnabled = ReminderScheduler.isSoundEnabled(context)
+        val channelId = ReminderScheduler.getNotificationChannelId(context)
         val remaining = (goal - consumed).coerceAtLeast(0)
-        val notification = NotificationCompat.Builder(context, ReminderScheduler.CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+
+        val notificationBuilder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_stat_water_drop)
             .setContentTitle("💧 Time to hydrate!")
             .setContentText("You've had $consumed ml of $goal ml. Drink $remaining ml more today!")
             .setStyle(
@@ -83,10 +87,15 @@ class WaterReminderWorker(
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .build()
+
+        if (soundEnabled) {
+            notificationBuilder.setSound(ReminderScheduler.getSoundUri(context))
+        } else {
+            notificationBuilder.setSilent(true)
+        }
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
     companion object {

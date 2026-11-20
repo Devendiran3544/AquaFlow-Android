@@ -26,6 +26,8 @@ class HydrationViewModel(
     val uiState: StateFlow<HydrationUiState> = _uiState.asStateFlow()
 
     init {
+        val soundEnabled = ReminderScheduler.isSoundEnabled(application)
+        _uiState.update { it.copy(reminderSoundEnabled = soundEnabled) }
         observeData()
     }
 
@@ -152,7 +154,13 @@ class HydrationViewModel(
         }
     }
 
-    fun updateReminderSettings(enabled: Boolean, intervalMinutes: Int) {
+    fun updateReminderSettings(
+        enabled: Boolean,
+        intervalMinutes: Int,
+        soundEnabled: Boolean = ReminderScheduler.isSoundEnabled(getApplication())
+    ) {
+        ReminderScheduler.setSoundEnabled(getApplication(), soundEnabled)
+        _uiState.update { it.copy(reminderSoundEnabled = soundEnabled) }
         viewModelScope.launch {
             repository.updateReminderSettings(enabled, intervalMinutes)
             if (enabled) {

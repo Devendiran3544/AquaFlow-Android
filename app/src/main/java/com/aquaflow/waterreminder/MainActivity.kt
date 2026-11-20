@@ -8,8 +8,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,17 +47,22 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.aquaflow.waterreminder.ui.CustomIntakeDialog
 import com.aquaflow.waterreminder.ui.GoalDialog
 import com.aquaflow.waterreminder.ui.HistoryDialog
@@ -113,6 +124,12 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
         label = "HydrationProgressAnimation"
     )
 
+    val dropScale = remember { Animatable(1f) }
+    val floatY = remember { Animatable(0f) }
+    val floatAlpha = remember { Animatable(0f) }
+    val floatScale = remember { Animatable(0.75f) }
+    var floatingText by remember { mutableStateOf<String?>(null) }
+
     // Listen for system date changes and time tick to reset daily intake in real-time
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
@@ -134,11 +151,36 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
         }
     }
 
-    // Show undo snackbar whenever a drink is logged
+    // Show undo snackbar and visual animations whenever a drink is logged
     LaunchedEffect(state.lastAddedIntakeId) {
         val amount = state.lastAddedAmount
         val id = state.lastAddedIntakeId
         if (amount != null && id != null) {
+            floatingText = "+$amount ml"
+            launch {
+                dropScale.snapTo(1f)
+                dropScale.animateTo(1.24f, tween(130, easing = FastOutSlowInEasing))
+                dropScale.animateTo(0.93f, tween(100, easing = LinearOutSlowInEasing))
+                dropScale.animateTo(1.0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+            }
+            launch {
+                floatY.snapTo(0f)
+                floatAlpha.snapTo(1f)
+                floatScale.snapTo(0.75f)
+                launch {
+                    floatScale.animateTo(1.08f, tween(160, easing = FastOutSlowInEasing))
+                    floatScale.animateTo(1.0f, tween(120, easing = LinearOutSlowInEasing))
+                }
+                launch {
+                    floatY.animateTo(-60f, tween(800, easing = FastOutSlowInEasing))
+                }
+                launch {
+                    delay(450)
+                    floatAlpha.animateTo(0f, tween(400, easing = LinearEasing))
+                    floatingText = null
+                }
+            }
+
             val result = snackbarHostState.showSnackbar(
                 message = "Added $amount ml of water",
                 actionLabel = "Undo",
@@ -238,7 +280,14 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("💧", fontSize = 72.sp)
+                        Text(
+                            text = "💧",
+                            fontSize = 72.sp,
+                            modifier = Modifier.graphicsLayer(
+                                scaleX = dropScale.value,
+                                scaleY = dropScale.value
+                            )
+                        )
                         Text("$consumed ml", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = DeepBlue)
                         Text(
                             text = "of $goal ml daily goal ✎",
@@ -251,6 +300,31 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
                             color = DeepBlue,
                             fontWeight = FontWeight.SemiBold
                         )
+                    }
+
+                    // Temporary floating "+XXX ml" visual feedback on intake
+                    if (floatingText != null && floatAlpha.value > 0f) {
+                        Box(
+                            modifier = Modifier
+                                .offset(y = floatY.value.dp)
+                                .graphicsLayer(
+                                    alpha = floatAlpha.value,
+                                    scaleX = floatScale.value,
+                                    scaleY = floatScale.value
+                                )
+                                .background(
+                                    color = Color.White.copy(alpha = 0.95f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = floatingText!!,
+                                color = AquaBlue,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 
@@ -320,9 +394,10 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
         ReminderDialog(
             enabled = state.reminderEnabled,
             intervalMinutes = state.reminderIntervalMinutes,
+            soundEnabled = state.reminderSoundEnabled,
             onDismiss = { viewModel.setReminderDialogVisible(false) },
-            onSave = { enabled, interval ->
-                viewModel.updateReminderSettings(enabled, interval)
+            onSave = { enabled, interval, sound ->
+                viewModel.updateReminderSettings(enabled, interval, sound)
                 viewModel.setReminderDialogVisible(false)
             }
         )

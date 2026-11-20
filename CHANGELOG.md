@@ -4,6 +4,28 @@ All notable changes to the AquaFlow Android project are documented in this file.
 
 ---
 
+## [0.1.0] - Focused Enhancements (2026-11-20)
+
+### Added
+- **Custom Water Drop Notification Sound**:
+  - Synthesized a pleasant, short, high-fidelity 16-bit PCM water-drop chime asset (`app/src/main/res/raw/water_drop.wav`, ~28 KB) without paid assets or external dependencies.
+  - Implemented dual notification channel architecture in `ReminderScheduler` (`aquaflow_reminders_v2` with custom sound, and `aquaflow_reminders_silent_v2` for vibration only).
+  - Added safe migration strategy deleting obsolete legacy channel `aquaflow_reminders_channel`.
+  - Added in-app "Water Drop Sound" toggle switch in `ReminderDialog`, persisted via `SharedPreferences`.
+  - Configured status bar silhouette icon (`ic_stat_water_drop.xml`) for clean reminder display.
+- **Water Intake Animation**:
+  - Added organic water-drop pulse and bounce animation on the central emoji droplet (`dropScale` spring animation) when a drink is logged.
+  - Added temporary floating "+XXX ml" badge visual feedback with smooth upward float and fade-out inside the hydration card.
+  - Preserved existing haptic feedback (`HapticFeedbackType.LongPress`) on all button touches.
+  - Maintained complete separation from Undo Snackbar, allowing instant undo without interference.
+- **Professional Adaptive App Icon**:
+  - Designed modern, minimalist Android adaptive launcher icon (`ic_launcher.xml` and `ic_launcher_round.xml`).
+  - Created high-contrast gradient background (`ic_launcher_background.xml`) using AquaBlue (`#087EBC`) to DeepBlue (`#05537D`).
+  - Created crisp, multi-layered water droplet foreground (`ic_launcher_foreground.xml`) with specular highlight arc and inner liquid depth accent, adhering to Android 72dp safe zone.
+  - Updated `AndroidManifest.xml` with `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`.
+
+---
+
 ## [0.1.0] - Phase 3 Completion & Quality Audit (2026-11-20)
 
 ### Added

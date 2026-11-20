@@ -51,6 +51,9 @@ All Phase 2 and Phase 3 capabilities are fully implemented, verified with automa
 - [x] **Scrollable & Responsive UX**: Full `verticalScroll` support with zero clipping on small screens and large font scaling.
 - [x] **Accessibility (TalkBack)**: Semantic action labels on interactive icons.
 - [x] **Boot & App-Update Receiver**: Reschedules reminders after device boot and package update.
+- [x] **Custom Water Drop Sound**: Original synthesized 16-bit PCM water-drop chime (`res/raw/water_drop.wav`), dual-channel migration (`aquaflow_reminders_v2` / `aquaflow_reminders_silent_v2`), and in-app sound toggle.
+- [x] **Water Intake Animation**: Dynamic spring pulse/bounce on droplet emoji plus temporary floating "+XXX ml" badge inside hydration card, without interfering with the Undo Snackbar.
+- [x] **Professional Adaptive Icon**: Minimalist, modern adaptive launcher icon with AquaBlue-to-DeepBlue gradient background, multi-layered droplet foreground with specular reflection, and dedicated status bar silhouette.
 
 ---
 
@@ -58,6 +61,6 @@ All Phase 2 and Phase 3 capabilities are fully implemented, verified with automa
 
 * **Unit Tests**: 30/30 automated unit tests passing (100% success rate across `WaterProgressTest` and `HydrationRepositoryTest`).
 * **Build Status**: `:app:assembleDebug` and `:app:testDebugUnitTest` successful.
-* **Debug APK**: Generated at `app/build/outputs/apk/debug/app-debug.apk` (18,689,459 bytes).
+* **Debug APK**: Generated at `app/build/outputs/apk/debug/app-debug.apk` (19,154,463 bytes).
 * **Acceptance Test Suite**: Complete 25-scenario device testing matrix documented in `DEVICE_TESTING.md`.
 * **Security & Privacy**: Zero cloud transmission; zero `INTERNET` permission requested; all records stored strictly on-device in Room; sensitive local files (`local.properties`, `cacerts`) excluded via `.gitignore`.

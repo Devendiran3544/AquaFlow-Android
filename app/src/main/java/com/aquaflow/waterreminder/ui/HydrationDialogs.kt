@@ -111,10 +111,12 @@ fun GoalDialog(
 fun ReminderDialog(
     enabled: Boolean,
     intervalMinutes: Int,
+    soundEnabled: Boolean = true,
     onDismiss: () -> Unit,
-    onSave: (Boolean, Int) -> Unit
+    onSave: (Boolean, Int, Boolean) -> Unit
 ) {
     var reminderEnabled by remember { mutableStateOf(enabled) }
+    var reminderSound by remember { mutableStateOf(soundEnabled) }
     var selectedInterval by remember { mutableIntStateOf(intervalMinutes) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -167,6 +169,27 @@ fun ReminderDialog(
                 }
 
                 if (reminderEnabled) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Water Drop Sound", fontWeight = FontWeight.SemiBold, color = DeepBlue)
+                            Text(
+                                "Play custom water drop chime",
+                                fontSize = 12.sp,
+                                color = Color(0xFF668397)
+                            )
+                        }
+                        Switch(
+                            checked = reminderSound,
+                            onCheckedChange = { reminderSound = it },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = AquaBlue)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(18.dp))
                     Text("Reminder Interval", fontWeight = FontWeight.SemiBold, color = DeepBlue, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(10.dp))
@@ -205,7 +228,7 @@ fun ReminderDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            onSave(reminderEnabled, selectedInterval)
+                            onSave(reminderEnabled, selectedInterval, reminderSound)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = AquaBlue),
                         shape = RoundedCornerShape(12.dp)

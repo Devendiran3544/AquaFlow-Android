@@ -13,6 +13,7 @@ data class HydrationUiState(
     val weeklyStats: List<DayHydrationStat> = emptyList(),
     val streakDays: Int = 0,
     val reminderEnabled: Boolean = false,
+    val reminderSoundEnabled: Boolean = true,
     val reminderIntervalMinutes: Int = 60,
     val reminderStartHour: Int = 8,
     val reminderEndHour: Int = 22,
