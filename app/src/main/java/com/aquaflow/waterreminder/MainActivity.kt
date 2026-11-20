@@ -14,6 +14,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -55,20 +56,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import com.aquaflow.waterreminder.ui.CustomIntakeDialog
 import com.aquaflow.waterreminder.ui.GoalDialog
+import com.aquaflow.waterreminder.ui.HapticFeedbackHelper
 import com.aquaflow.waterreminder.ui.HistoryDialog
 import com.aquaflow.waterreminder.ui.HydrationViewModel
 import com.aquaflow.waterreminder.ui.ReminderDialog
 import com.aquaflow.waterreminder.ui.StatsDialog
+import com.aquaflow.waterreminder.ui.WaterGlassVessel
+import com.aquaflow.waterreminder.ui.WaterSoundManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val AquaBlue = Color(0xFF087EBC)
 private val DeepBlue = Color(0xFF075985)
@@ -113,18 +116,24 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
     val state by viewModel.uiState.collectAsState()
     val consumed = state.consumedMl
     val goal = state.dailyGoalMl
-    val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val view = LocalView.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
     val animatedProgress by animateFloatAsState(
         targetValue = state.progress,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 750, easing = FastOutSlowInEasing),
         label = "HydrationProgressAnimation"
     )
 
-    val dropScale = remember { Animatable(1f) }
+    val animatedConsumed by animateIntAsState(
+        targetValue = consumed,
+        animationSpec = tween(durationMillis = 750, easing = FastOutSlowInEasing),
+        label = "ConsumedMlCounter"
+    )
+
+    var isPouring by remember { mutableStateOf(false) }
     val floatY = remember { Animatable(0f) }
     val floatAlpha = remember { Animatable(0f) }
     val floatScale = remember { Animatable(0.75f) }
@@ -157,12 +166,7 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
         val id = state.lastAddedIntakeId
         if (amount != null && id != null) {
             floatingText = "+$amount ml"
-            launch {
-                dropScale.snapTo(1f)
-                dropScale.animateTo(1.24f, tween(130, easing = FastOutSlowInEasing))
-                dropScale.animateTo(0.93f, tween(100, easing = LinearOutSlowInEasing))
-                dropScale.animateTo(1.0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
-            }
+            isPouring = true
             launch {
                 floatY.snapTo(0f)
                 floatAlpha.snapTo(1f)
@@ -172,13 +176,17 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
                     floatScale.animateTo(1.0f, tween(120, easing = LinearOutSlowInEasing))
                 }
                 launch {
-                    floatY.animateTo(-60f, tween(800, easing = FastOutSlowInEasing))
+                    floatY.animateTo(-55f, tween(850, easing = FastOutSlowInEasing))
                 }
                 launch {
-                    delay(450)
-                    floatAlpha.animateTo(0f, tween(400, easing = LinearEasing))
+                    delay(550)
+                    floatAlpha.animateTo(0f, tween(350, easing = LinearEasing))
                     floatingText = null
                 }
+            }
+            launch {
+                delay(800)
+                isPouring = false
             }
 
             val result = snackbarHostState.showSnackbar(
@@ -265,7 +273,7 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
 
                 Spacer(Modifier.height(18.dp))
 
-                // Central Hydration Card (Preserved exactly as original, with tap to customize goal)
+                // Central Hydration Card (Preserved light-blue gradient, with live animated glass & pour)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -279,26 +287,34 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "💧",
-                            fontSize = 72.sp,
-                            modifier = Modifier.graphicsLayer(
-                                scaleX = dropScale.value,
-                                scaleY = dropScale.value
-                            )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        WaterGlassVessel(
+                            progress = animatedProgress,
+                            isPouring = isPouring,
+                            size = 96.dp
                         )
-                        Text("$consumed ml", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = DeepBlue)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "$animatedConsumed ml",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DeepBlue
+                        )
                         Text(
                             text = "of $goal ml daily goal ✎",
-                            color = Color(0xFF466477)
+                            color = Color(0xFF466477),
+                            fontSize = 13.sp
                         )
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(4.dp))
                         val percentage = (animatedProgress * 100).toInt()
                         Text(
                             text = "$percentage% completed",
                             color = DeepBlue,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
                         )
                     }
 
@@ -349,12 +365,13 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
 
                 Spacer(Modifier.height(14.dp))
 
-                // Quick add buttons (Preserved exactly as original, with tactile haptic feedback)
+                // Quick add buttons with immediate tactile haptics & water-pour sound
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(150, 200, 250, 500).forEach { amount ->
                         Button(
                             onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                HapticFeedbackHelper.performIntakeHaptic(context, view)
+                                WaterSoundManager.playPourSound(context)
                                 viewModel.addWater(amount)
                             },
                             modifier = Modifier.weight(1f),
@@ -395,9 +412,11 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
             enabled = state.reminderEnabled,
             intervalMinutes = state.reminderIntervalMinutes,
             soundEnabled = state.reminderSoundEnabled,
+            pourSoundEnabled = state.pourSoundEnabled,
             onDismiss = { viewModel.setReminderDialogVisible(false) },
-            onSave = { enabled, interval, sound ->
-                viewModel.updateReminderSettings(enabled, interval, sound)
+            onSave = { enabled, interval, reminderSound, pourSound ->
+                viewModel.updateReminderSettings(enabled, interval, reminderSound)
+                viewModel.updatePourSoundEnabled(pourSound)
                 viewModel.setReminderDialogVisible(false)
             }
         )
@@ -425,7 +444,8 @@ private fun AquaFlowHome(viewModel: HydrationViewModel) {
         CustomIntakeDialog(
             onDismiss = { viewModel.setCustomIntakeDialogVisible(false) },
             onConfirm = { amount ->
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                HapticFeedbackHelper.performIntakeHaptic(context, view)
+                WaterSoundManager.playPourSound(context)
                 viewModel.addWater(amount)
                 viewModel.setCustomIntakeDialogVisible(false)
             }

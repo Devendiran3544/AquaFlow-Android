@@ -112,11 +112,13 @@ fun ReminderDialog(
     enabled: Boolean,
     intervalMinutes: Int,
     soundEnabled: Boolean = true,
+    pourSoundEnabled: Boolean = true,
     onDismiss: () -> Unit,
-    onSave: (Boolean, Int, Boolean) -> Unit
+    onSave: (Boolean, Int, Boolean, Boolean) -> Unit
 ) {
     var reminderEnabled by remember { mutableStateOf(enabled) }
     var reminderSound by remember { mutableStateOf(soundEnabled) }
+    var intakePourSound by remember { mutableStateOf(pourSoundEnabled) }
     var selectedInterval by remember { mutableIntStateOf(intervalMinutes) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -136,13 +138,37 @@ fun ReminderDialog(
         ) {
             Column(modifier = Modifier.padding(22.dp)) {
                 Text(
-                    text = "Water Reminders",
+                    text = "Reminders & Sounds",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = DeepBlue
                 )
                 Spacer(modifier = Modifier.height(14.dp))
 
+                // Pour Sound Effect Toggle (Independent Intake Audio)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Water Pouring Sound", fontWeight = FontWeight.SemiBold, color = DeepBlue)
+                        Text(
+                            "Play satisfying water pour on logging",
+                            fontSize = 12.sp,
+                            color = Color(0xFF668397)
+                        )
+                    }
+                    Switch(
+                        checked = intakePourSound,
+                        onCheckedChange = { intakePourSound = it },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = AquaBlue)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Reminder Notifications Toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,9 +202,9 @@ fun ReminderDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Water Drop Sound", fontWeight = FontWeight.SemiBold, color = DeepBlue)
+                            Text("Reminder Pour Chime", fontWeight = FontWeight.SemiBold, color = DeepBlue)
                             Text(
-                                "Play custom water drop chime",
+                                "Play gentle water-pour chime on alert",
                                 fontSize = 12.sp,
                                 color = Color(0xFF668397)
                             )
@@ -228,7 +254,7 @@ fun ReminderDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-                            onSave(reminderEnabled, selectedInterval, reminderSound)
+                            onSave(reminderEnabled, selectedInterval, reminderSound, intakePourSound)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = AquaBlue),
                         shape = RoundedCornerShape(12.dp)

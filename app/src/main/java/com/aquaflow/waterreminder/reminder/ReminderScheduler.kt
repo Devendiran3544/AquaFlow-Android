@@ -13,15 +13,17 @@ import com.aquaflow.waterreminder.R
 import java.util.concurrent.TimeUnit
 
 object ReminderScheduler {
-    const val CHANNEL_ID_SOUND = "aquaflow_reminders_v2"
-    const val CHANNEL_ID_SILENT = "aquaflow_reminders_silent_v2"
+    const val CHANNEL_ID_SOUND = "aquaflow_reminders_v3"
+    const val CHANNEL_ID_SILENT = "aquaflow_reminders_silent_v3"
     private const val LEGACY_CHANNEL_ID = "aquaflow_reminders_channel"
+    private const val V2_CHANNEL_SOUND_ID = "aquaflow_reminders_v2"
+    private const val V2_CHANNEL_SILENT_ID = "aquaflow_reminders_silent_v2"
     private const val WORK_NAME = "aquaflow_periodic_reminder"
     private const val PREFS_NAME = "aquaflow_prefs"
     private const val KEY_SOUND_ENABLED = "reminder_sound_enabled"
 
     fun getSoundUri(context: Context): Uri {
-        return Uri.parse("android.resource://${context.packageName}/${R.raw.water_drop}")
+        return Uri.parse("android.resource://${context.packageName}/${R.raw.water_pour}")
     }
 
     fun isSoundEnabled(context: Context): Boolean {
@@ -44,9 +46,11 @@ object ReminderScheduler {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            // Safe migration: remove legacy channel so old channel properties don't prevent sound updates
+            // Safe migration: clean up obsolete channels so channel properties update cleanly
             try {
                 notificationManager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
+                notificationManager.deleteNotificationChannel(V2_CHANNEL_SOUND_ID)
+                notificationManager.deleteNotificationChannel(V2_CHANNEL_SILENT_ID)
             } catch (_: Exception) {
             }
 
@@ -56,13 +60,13 @@ object ReminderScheduler {
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
 
-            // Sound channel with custom water drop chime
+            // Sound channel with soothing water-pour chime
             val soundChannel = NotificationChannel(
                 CHANNEL_ID_SOUND,
                 "Hydration Reminders",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Water reminders with custom water drop chime and vibration"
+                description = "Water reminders with soothing water-pour chime and vibration"
                 enableVibration(true)
                 enableLights(true)
                 setSound(soundUri, audioAttributes)
@@ -86,7 +90,6 @@ object ReminderScheduler {
     }
 
     fun scheduleReminders(context: Context, intervalMinutes: Int) {
-        // WorkManager minimum periodic interval is 15 minutes
         val sanitizedInterval = intervalMinutes.coerceAtLeast(15).toLong()
         val request = PeriodicWorkRequestBuilder<WaterReminderWorker>(
             sanitizedInterval,

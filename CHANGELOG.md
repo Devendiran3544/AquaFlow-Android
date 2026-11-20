@@ -4,6 +4,28 @@ All notable changes to the AquaFlow Android project are documented in this file.
 
 ---
 
+## [0.1.0] - Water-Pour Experience & Haptics Enhancement (2026-11-20)
+
+### Added
+- **Tactile Haptic Feedback Fix (`HapticFeedbackHelper`)**:
+  - Investigated and resolved haptic feedback suppression caused by Compose default `AndroidHapticFeedback` failing when system touch feedback is disabled or views lack explicit flags.
+  - Added `<uses-permission android:name="android.permission.VIBRATE" />` to `AndroidManifest.xml`.
+  - Implemented dual-path haptics: primary `View.performHapticFeedback` with `FLAG_IGNORE_VIEW_SETTING`, with automatic fallback to system `Vibrator` / `VibratorManager` executing a crisp, subtle 20 ms click (`VibrationEffect.EFFECT_CLICK`).
+  - Haptics trigger immediately upon pressing quick-add buttons (+150, +200, +250, +500) and custom intake confirmation, functioning independently of sound settings.
+- **Realistic Water-Pour Audio (`WaterSoundManager`)**:
+  - Replaced generic single-drop sound with a realistic, pleasant, 0.95-second water-pouring sound (`app/src/main/res/raw/water_pour.wav`, ~83 KB), synthesizing Helmholtz air column frequency rise (480 Hz -> 980 Hz), fluid turbulence, and stochastic Minnaert air-bubble dynamics.
+  - Built `WaterSoundManager` using Android `SoundPool` with `maxStreams = 1` and stream cutoff, preventing audio overlap during rapid repeated taps.
+  - Added independent in-app "Water Pouring Sound" toggle in `ReminderDialog`.
+  - Migrated reminder notification channel to `aquaflow_reminders_v3` (soothing pour chime) with clean deletion of legacy channels.
+- **Water-Pouring Glass UI Animation (`WaterGlassVessel`)**:
+  - Replaced static droplet emoji with an interactive modern glass vessel illustration rendered via hardware-accelerated Compose `Canvas`.
+  - Displays dynamic water level with continuous ambient wave motion and animated agitation during pouring.
+  - Visual water stream arches gracefully into the glass with radiating impact ripples during intake.
+  - Smoothly animates consumed ml (`animateIntAsState`) and percentage counter alongside floating "+XXX ml" badge.
+  - Preserved existing Undo Snackbar, light-blue aesthetic, and zero-network privacy architecture.
+
+---
+
 ## [0.1.0] - Focused Enhancements (2026-11-20)
 
 ### Added

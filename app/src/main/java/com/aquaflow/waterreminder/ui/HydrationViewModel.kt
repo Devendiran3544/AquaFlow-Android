@@ -27,7 +27,14 @@ class HydrationViewModel(
 
     init {
         val soundEnabled = ReminderScheduler.isSoundEnabled(application)
-        _uiState.update { it.copy(reminderSoundEnabled = soundEnabled) }
+        val pourEnabled = WaterSoundManager.isPourSoundEnabled(application)
+        WaterSoundManager.init(application)
+        _uiState.update {
+            it.copy(
+                reminderSoundEnabled = soundEnabled,
+                pourSoundEnabled = pourEnabled
+            )
+        }
         observeData()
     }
 
@@ -189,6 +196,16 @@ class HydrationViewModel(
 
     fun setCustomIntakeDialogVisible(visible: Boolean) {
         _uiState.update { it.copy(showCustomIntakeDialog = visible) }
+    }
+
+    fun updatePourSoundEnabled(enabled: Boolean) {
+        WaterSoundManager.setPourSoundEnabled(getApplication(), enabled)
+        _uiState.update { it.copy(pourSoundEnabled = enabled) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        WaterSoundManager.release()
     }
 
     companion object {

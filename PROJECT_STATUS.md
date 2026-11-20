@@ -51,8 +51,9 @@ All Phase 2 and Phase 3 capabilities are fully implemented, verified with automa
 - [x] **Scrollable & Responsive UX**: Full `verticalScroll` support with zero clipping on small screens and large font scaling.
 - [x] **Accessibility (TalkBack)**: Semantic action labels on interactive icons.
 - [x] **Boot & App-Update Receiver**: Reschedules reminders after device boot and package update.
-- [x] **Custom Water Drop Sound**: Original synthesized 16-bit PCM water-drop chime (`res/raw/water_drop.wav`), dual-channel migration (`aquaflow_reminders_v2` / `aquaflow_reminders_silent_v2`), and in-app sound toggle.
-- [x] **Water Intake Animation**: Dynamic spring pulse/bounce on droplet emoji plus temporary floating "+XXX ml" badge inside hydration card, without interfering with the Undo Snackbar.
+- [x] **Tactile Haptic Feedback**: `HapticFeedbackHelper` with `FLAG_IGNORE_VIEW_SETTING` and `Vibrator` fallback executing immediate, subtle click haptics on button press, independent of sound settings.
+- [x] **Water Pour Audio & SoundPool**: Original 0.95s water-pouring sound (`res/raw/water_pour.wav`), single-stream non-overlapping `SoundPool` playback, independent intake sound toggle, and notification channel migration (`aquaflow_reminders_v3`).
+- [x] **Water Pour Glass UI Animation**: Custom Canvas glass vessel (`WaterGlassVessel`) with fluid wave motion, pouring stream with impact ripples, smooth numeric count-up (`animateIntAsState`), and floating "+XXX ml" indicator.
 - [x] **Professional Adaptive Icon**: Minimalist, modern adaptive launcher icon with AquaBlue-to-DeepBlue gradient background, multi-layered droplet foreground with specular reflection, and dedicated status bar silhouette.
 
 ---
@@ -61,6 +62,6 @@ All Phase 2 and Phase 3 capabilities are fully implemented, verified with automa
 
 * **Unit Tests**: 30/30 automated unit tests passing (100% success rate across `WaterProgressTest` and `HydrationRepositoryTest`).
 * **Build Status**: `:app:assembleDebug` and `:app:testDebugUnitTest` successful.
-* **Debug APK**: Generated at `app/build/outputs/apk/debug/app-debug.apk` (19,154,463 bytes).
+* **Debug APK**: Generated at `app/build/outputs/apk/debug/app-debug.apk` (19,154,599 bytes).
 * **Acceptance Test Suite**: Complete 25-scenario device testing matrix documented in `DEVICE_TESTING.md`.
 * **Security & Privacy**: Zero cloud transmission; zero `INTERNET` permission requested; all records stored strictly on-device in Room; sensitive local files (`local.properties`, `cacerts`) excluded via `.gitignore`.
