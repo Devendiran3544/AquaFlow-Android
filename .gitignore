@@ -5,6 +5,7 @@ cacerts
 *.cer
 **/build/
 *.iml
+*.apk
 .DS_Store
 .externalNativeBuild/
 .cxx/
